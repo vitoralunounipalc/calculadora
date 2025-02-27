@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Sistemas Numéricos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width:, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        select, input, button {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e9f7ef;
+            border-radius: 4px;
+            font-size: 18px;
+        }
+        .hidden {
+            display: none;
+        }
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        .input-area {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Calculadora de Sistemas Numéricos</h1>
+        
+        <div class="form-group">
+            <label for="operacao">Selecione a operação:</label>
+            <select id="operacao">
+                <option value="">-- Selecione uma operação --</option>
+                <option value="bin_para_dec">1. Binário para Decimal</option>
+                <option value="dec_para_bin">2. Decimal para Binário</option>
+                <option value="bin_frac_para_dec">3. Binário Fracionário para Decimal</option>
+                <option value="dec_frac_para_bin">4. Decimal Fracionário para Binário</option>
+                <option value="oct_para_dec">5. Octal para Decimal</option>
+                <option value="dec_para_oct">6. Decimal para Octal</option>
+                <option value="oct_para_bin">7. Octal para Binário</option>
+                <option value="bin_para_oct">8. Binário para Octal</option>
+                <option value="mult_bin">9. Multiplicação Binária</option>
+                <option value="hex_para_bin">10. Hexadecimal para Binário</option>
+                <option value="dec_para_hex">11. Decimal para Hexadecimal</option>
+                <option value="hex_para_dec">12. Hexadecimal para Decimal</option>
+                <option value="bin_para_hex">13. Binário para Hexadecimal</option>
+            </select>
+        </div>
+        
+        <div id="input-areas">
+            <!-- As áreas de entrada serão adicionadas dinamicamente -->
+        </div>
+        
+        <div class="result hidden" id="resultado">
+            <p><strong>Resultado:</strong> <span id="valor-resultado"></span></p>
+        </div>
+    </div>
+
+    <script>
+        // Funções de conversão
+        function binarioParaDecimal(binario) {
+            if (!/^-?[01]+$/.test(binario)) {
+                throw new Error("Entrada inválida. Use apenas 0 e 1.");
+            }
+            
+            let negativo = false;
+            if (binario.startsWith('-')) {
+                negativo = true;
+                binario = binario.substring(1);
+            }
+            
+            let decimal = 0;
+            for (let i = 0; i < binario.length; i++) {
+                decimal = decimal * 2 + parseInt(binario[i]);
+            }
+            
+            return negativo ? -decimal : decimal;
+        }
+
+        function decimalParaBinario(decimal) {
+            if (decimal === 0) return "0";
+            
+            const negativo = decimal < 0;
+            let num = Math.abs(decimal);
+            let binario = "";
+            
+            while (num > 0) {
+                binario = (num % 2) + binario;
+                num = Math.floor(num / 2);
+            }
+            
+            return negativo ? "-" + binario : binario;
+        }
+
+        function binarioFracionarioParaDecimal(binario) {
+            if (!binario.includes('.')) {
+                return binarioParaDecimal(binario);
+            }
+            
+            const [parteInteira, parteFracionaria] = binario.split('.');
+            
+            if (!/^-?[01]+$/.test(parteInteira) || !/^[01]+$/.test(parteFracionaria)) {
+                throw new Error("Entrada inválida. Use apenas 0 e 1.");
+            }
+            
+            const decimalInteiro = binarioParaDecimal(parteInteira);
+            
+            let decimalFracionario = 0;
+            for (let i = 0; i < parteFracionaria.length; i++) {
+                decimalFracionario += parseInt(parteFracionaria[i]) * Math.pow(2, -(i + 1));
+            }
+            
+            return decimalInteiro + decimalFracionario;
+        }
+
+        function decimalFracionarioParaBinario(decimal, precisao = 8) {
+            if (!String(decimal).includes('.')) {
+                return decimalParaBinario(decimal);
+            }
+            
+            let [parteInteira, parteFracionaria] = String(decimal).split('.');
+            parteInteira = parseInt(parteInteira);
+            parteFracionaria = parseFloat("0." + parteFracionaria);
+            
+            const binarioInteiro = decimalParaBinario(parteInteira);
+            
+            let binarioFracionario = "";
+            for (let i = 0; i < precisao; i++) {
+                parteFracionaria *= 2;
+                const bit = Math.floor(parteFracionaria);
+                binarioFracionario += bit;
+                if (parteFracionaria >= 1) {
+                    parteFracionaria -= 1;
+                }
+            }
+            
+            return binarioInteiro + "." + binarioFracionario;
+        }
+
+        function decimalParaOctal(decimal) {
+            if (decimal === 0) return "0";
+            
+            const negativo = decimal < 0;
+            let num = Math.abs(decimal);
+            let octal = "";
+            
+            while (num > 0) {
+                octal = (num % 8) + octal;
+                num = Math.floor(num / 8);
+            }
+            
+            return negativo ? "-" + octal : octal;
+        }
+
+        function octalParaDecimal(octal) {
+            if (!/^-?[0-7]+$/.test(octal)) {
+                throw new Error("Entrada inválida. Use apenas dígitos de 0 a 7.");
+            }
+            
+            let negativo = false;
+            if (octal.startsWith('-')) {
+                negativo = true;
+                octal = octal.substring(1);
+            }
+            
+            let decimal = 0;
+            for (let i = 0; i < octal.length; i++) {
+                decimal = decimal * 8 + parseInt(octal[i]);
+            }
+            
+            return negativo ? -decimal : decimal;
+        }
+
+        function binarioParaOctal(binario) {
+            const decimal = binarioParaDecimal(binario);
+            return decimalParaOctal(decimal);
+        }
+
+        function octalParaBinario(octal) {
+            const decimal = octalParaDecimal(octal);
+            return decimalParaBinario(decimal);
+        }
+
+        function decimalParaHexadecimal(decimal) {
+            if (decimal === 0) return "0";
+            
+            const negativo = decimal < 0;
+            let num = Math.abs(decimal);
+            const hexChars = "0123456789ABCDEF";
+            let hexadecimal = "";
+            
+            while (num > 0) {
+                hexadecimal = hexChars[num % 16] + hexadecimal;
+                num = Math.floor(num / 16);
+            }
+            
+            return negativo ? "-" + hexadecimal : hexadecimal;
+        }
+
+        function hexadecimalParaDecimal(hexadecimal) {
+            if (!/^-?[0-9A-Fa-f]+$/.test(hexadecimal)) {
+                throw new Error("Entrada inválida. Use apenas dígitos hexadecimais (0-9, A-F).");
+            }
+            
+            let negativo = false;
+            if (hexadecimal.startsWith('-')) {
+                negativo = true;
+                hexadecimal = hexadecimal.substring(1);
+            }
+            
+            let decimal = 0;
+            const hexChars = "0123456789ABCDEF";
+            hexadecimal = hexadecimal.toUpperCase();
+            
+            for (let i = 0; i < hexadecimal.length; i++) {
+                decimal = decimal * 16 + hexChars.indexOf(hexadecimal[i]);
+            }
+            
+            return negativo ? -decimal : decimal;
+        }
+
+        function hexadecimalParaBinario(hexadecimal) {
+            const hexParaBin = {
+                '0': '0000', '1': '0001', '2': '0010', '3': '0011',
+                '4': '0100', '5': '0101', '6': '0110', '7': '0111',
+                '8': '1000', '9': '1001', 'A': '1010', 'B': '1011',
+                'C': '1100', 'D': '1101', 'E': '1110', 'F': '1111'
+            };
+            
+            let negativo = false;
+            if (hexadecimal.startsWith('-')) {
+                negativo = true;
+                hexadecimal = hexadecimal.substring(1);
+            }
+            
+            hexadecimal = hexadecimal.toUpperCase();
+            let binario = "";
+            
+            for (let i = 0; i < hexadecimal.length; i++) {
+                const digito = hexadecimal[i];
+                if (hexParaBin[digito]) {
+                    binario += hexParaBin[digito];
+                } else {
+                    throw new Error("Caractere hexadecimal inválido: " + digito);
+                }
+            }
+            
+            // Remove zeros à esquerda
+            binario = binario.replace(/^0+/, '') || '0';
+            
+            return negativo ? "-" + binario : binario;
+        }
+
+        function binarioParaHexadecimal(binario) {
+            const decimal = binarioParaDecimal(binario);
+            return decimalParaHexadecimal(decimal);
+        }
+
+        function multiplicacaoBinaria(bin1, bin2) {
+            const dec1 = binarioParaDecimal(bin1);
+            const dec2 = binarioParaDecimal(bin2);
+            const produtoDecimal = dec1 * dec2;
+            return decimalParaBinario(produtoDecimal);
+        }
+
+        // Configuração da interface
+        const operacaoSelect = document.getElementById('operacao');
+        const inputAreas = document.getElementById('input-areas');
+        const resultado = document.getElementById('resultado');
+        const valorResultado = document.getElementById('valor-resultado');
+        
+        operacaoSelect.addEventListener('change', function() {
+            inputAreas.innerHTML = '';
+            resultado.classList.add('hidden');
+            
+            const operacao = this.value;
+            if (!operacao) return;
+            
+            let html = '';
+            
+            switch (operacao) {
+                case 'bin_para_dec':
+                    html = `
+                        <div class="input-area">
+                            <div class="form-group">
+                                <label for="binario">Digite o número binário:</label>
+                                <input type="text" id="binario">
+                            </div>
+                            <button id="calcular">Calcular</button>
+                        </div>
+                    `;
+                    break;
+                case 'dec_para_bin':
+                    html = `
+                        <div class="input-area">
+                            <div class="form-group">
+                                <label for="decimal">Digite o número decimal:</label>
+                                <input type="number" id="decimal">
+                            </div>
+                            <button id="calcular">Calcular</button>
+                        </div>
+                    `;
+                    break;
+                case 'bin_frac_para_dec':
+                    html = `
+                        <div class="input-area">
+                            <div class="form-group">
+                                <label for="binario_frac">Digite o número binário fracionário (ex: 101.01):</label>
+                                <input type="text" id="binario_frac">
+                            </div>
+                            <button id="calcular">Calcular</button>
+                        </div>
+                    `;
+                    break;
+                case 'dec_frac_para_bin':
+                    html = `
+                        <div class="input-area">
+                            <div class="form-group">
+                                <label for="decimal_frac">Digite o número decimal fracionário (ex: 5.75):</label>
+                                <input type="number" id="decimal_frac" step="any">
+                            </div>
+                            <div class="form-group">
+                                <label for="precisao">Precisão (bits após o ponto):</label>
+                                <input type="number" id="precisao" value="8" min="1" max="32">
+                            </div>
+                            <button id="calcular">Calcular</button>
+                        </div>
+                    `;
+                    break;
+                case 'oct_para_dec':
+                    html = `
+                        <div class="input-area">
+                            <div class="form-group">
+                                <label for="octal">Digite o número octal:</label>
+                                <input type="text" id="octal">
+                            </div>
+                            <button id="calcular">Calcular</button>
+                        </div>
+                    `;
+                    break;
+                case 'dec_para_oct':
+                    html = `
+                        <div class="input-area">
+                            <div class="form-group">
+                                <label for="decimal">Digite o número decimal:</label>
+                                <input type="number" id="decimal">
+                            </div>
+                            <button id="calcular">Calcular</button>
+                        </div>
+                    `;
+                    break;
+                case 'oct_para_bin':
+                    html = `
+                        <div class="input-area">
+                            <div class="form-group">
+                                <label for="octal">Digite o número octal:</label>
+                                <input type="text" id="octal">
+                            </div>
+                            <button id="calcular">Calcular</button>
+                        </div>
+                    `;
+                    break;
+                case 'bin_para_oct':
+                    html = `
+                        <div class="input-area">
+                            <div class="form-group">
+                                <label for="binario">Digite o número binário:</label>
+                                <input type="text" id="binario">
+                            </div>
+                            <button id="calcular">Calcular</button>
+                        </div>
+                    `;
+                    break;
+                case 'mult_bin':
+                    html = `
+                        <div class="input-area">
+                            <div class="form-group">
+                                <label for="binario1">Digite o primeiro número binário:</label>
+                                <input type="text" id="binario1">
+                            </div>
+                            <div class="form-group">
+                                <label for="binario2">Digite o segundo número binário:</label>
+                                <input type="text" id="binario2">
+                            </div>
+                            <button id="calcular">Calcular</button>
+                        </div>
+                    `;
+                    break;
+                case 'hex_para_bin':
+                    html = `
+                        <div class="input-area">
+                            <div class="form-group">
+                                <label for="hexadecimal">Digite o número hexadecimal:</label>
+                                <input type="text" id="hexadecimal">
+                            </div>
+                            <button id="calcular">Calcular</button>
+                        </div>
+                    `;
+                    break;
+                case 'dec_para_hex':
+                    html = `
+                        <div class="input-area">
+                            <div class="form-group">
+                                <label for="decimal">Digite o número decimal:</label>
+                                <input type="number" id="decimal">
+                            </div>
+                            <button id="calcular">Calcular</button>
+                        </div>
+                    `;
+                    break;
+                case 'hex_para_dec':
+                    html = `
+                        <div class="input-area">
+                            <div class="form-group">
+                                <label for="hexadecimal">Digite o número hexadecimal:</label>
+                                <input type="text" id="hexadecimal">
+                            </div>
+                            <button id="calcular">Calcular</button>
+                        </div>
+                    `;
+                    break;
+                case 'bin_para_hex':
+                    html = `
+                        <div class="input-area">
+                            <div class="form-group">
+                                <label for="binario">Digite o número binário:</label>
+                                <input type="text" id="binario">
+                            </div>
+                            <button id="calcular">Calcular</button>
+                        </div>
+                    `;
+                    break;
+            }
+            
+            inputAreas.innerHTML = html;
+            
+            // Adicionar evento ao botão de calcular
+            const calcularBtn = document.getElementById('calcular');
+            if (calcularBtn) {
+                calcularBtn.addEventListener('click', calcular);
+            }
+        });
+        
+        function calcular() {
+            try {
+                const operacao = operacaoSelect.value;
+                let valor;
+                
+                switch (operacao) {
+                    case 'bin_para_dec':
+                        const binario = document.getElementById('binario').value;
+                        valor = binarioParaDecimal(binario);
+                        break;
+                    case 'dec_para_bin':
+                        const decimal = parseInt(document.getElementById('decimal').value);
+                        valor = decimalParaBinario(decimal);
+                        break;
+                    case 'bin_frac_para_dec':
+                        const binarioFrac = document.getElementById('binario_frac').value;
+                        valor = binarioFracionarioParaDecimal(binarioFrac);
+                        break;
+                    case 'dec_frac_para_bin':
+                        const decimalFrac = parseFloat(document.getElementById('decimal_frac').value);
+                        const precisao = parseInt(document.getElementById('precisao').value);
+                        valor = decimalFracionarioParaBinario(decimalFrac, precisao);
+                        break;
+                    case 'oct_para_dec':
+                        const octal = document.getElementById('octal').value;
+                        valor = octalParaDecimal(octal);
+                        break;
+                    case 'dec_para_oct':
+                        const decimalOct = parseInt(document.getElementById('decimal').value);
+                        valor = decimalParaOctal(decimalOct);
+                        break;
+                    case 'oct_para_bin':
+                        const octalBin = document.getElementById('octal').value;
+                        valor = octalParaBinario(octalBin);
+                        break;
+                    case 'bin_para_oct':
+                        const binarioOct = document.getElementById('binario').value;
+                        valor = binarioParaOctal(binarioOct);
+                        break;
+                    case 'mult_bin':
+                        const bin1 = document.getElementById('binario1').value;
+                        const bin2 = document.getElementById('binario2').value;
+                        valor = multiplicacaoBinaria(bin1, bin2);
+                        break;
+                    case 'hex_para_bin':
+                        const hexBin = document.getElementById('hexadecimal').value;
+                        valor = hexadecimalParaBinario(hexBin);
+                        break;
+                    case 'dec_para_hex':
+                        const decimalHex = parseInt(document.getElementById('decimal').value);
+                        valor = decimalParaHexadecimal(decimalHex);
+                        break;
+                    case 'hex_para_dec':
+                        const hexDec = document.getElementById('hexadecimal').value;
+                        valor = hexadecimalParaDecimal(hexDec);
+                        break;
+                    case 'bin_para_hex':
+                        const binarioHex = document.getElementById('binario').value;
+                        valor = binarioParaHexadecimal(binarioHex);
+                        break;
+                }
+                
+                valorResultado.textContent = valor;
+                resultado.classList.remove('hidden');
+                resultado.classList.remove('error');
+            } catch (e) {
+                valorResultado.textContent = e.message;
+                resultado.classList.remove('hidden');
+                resultado.classList.add('error');
+            }
+        }
+    </script>
+</body>
+</html>
