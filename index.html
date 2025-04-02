@@ -7,7 +7,6 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width:, sans-serif;
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
@@ -138,6 +137,9 @@
         }
 
         function binarioFracionarioParaDecimal(binario) {
+            // Aceitamos tanto ponto quanto vírgula como separador
+            binario = binario.replace(',', '.');
+            
             if (!binario.includes('.')) {
                 return binarioParaDecimal(binario);
             }
@@ -159,11 +161,14 @@
         }
 
         function decimalFracionarioParaBinario(decimal, precisao = 8) {
-            if (!String(decimal).includes('.')) {
+            // Converter entrada com vírgula para formato com ponto
+            const decimalStr = String(decimal).replace(',', '.');
+            
+            if (!decimalStr.includes('.')) {
                 return decimalParaBinario(decimal);
             }
             
-            let [parteInteira, parteFracionaria] = String(decimal).split('.');
+            let [parteInteira, parteFracionaria] = decimalStr.split('.');
             parteInteira = parseInt(parteInteira);
             parteFracionaria = parseFloat("0." + parteFracionaria);
             
@@ -179,7 +184,7 @@
                 }
             }
             
-            return binarioInteiro + "." + binarioFracionario;
+            return binarioInteiro + "," + binarioFracionario;
         }
 
         function decimalParaOctal(decimal) {
@@ -350,7 +355,7 @@
                     html = `
                         <div class="input-area">
                             <div class="form-group">
-                                <label for="binario_frac">Digite o número binário fracionário (ex: 101.01):</label>
+                                <label for="binario_frac">Digite o número binário fracionário (ex: 101,01):</label>
                                 <input type="text" id="binario_frac">
                             </div>
                             <button id="calcular">Calcular</button>
@@ -361,11 +366,11 @@
                     html = `
                         <div class="input-area">
                             <div class="form-group">
-                                <label for="decimal_frac">Digite o número decimal fracionário (ex: 5.75):</label>
-                                <input type="number" id="decimal_frac" step="any">
+                                <label for="decimal_frac">Digite o número decimal fracionário (ex: 5,75):</label>
+                                <input type="text" id="decimal_frac">
                             </div>
                             <div class="form-group">
-                                <label for="precisao">Precisão (bits após o ponto):</label>
+                                <label for="precisao">Precisão (bits após a vírgula):</label>
                                 <input type="number" id="precisao" value="8" min="1" max="32">
                             </div>
                             <button id="calcular">Calcular</button>
@@ -505,7 +510,7 @@
                         valor = binarioFracionarioParaDecimal(binarioFrac);
                         break;
                     case 'dec_frac_para_bin':
-                        const decimalFrac = parseFloat(document.getElementById('decimal_frac').value);
+                        const decimalFrac = document.getElementById('decimal_frac').value;
                         const precisao = parseInt(document.getElementById('precisao').value);
                         valor = decimalFracionarioParaBinario(decimalFrac, precisao);
                         break;
@@ -546,6 +551,11 @@
                         const binarioHex = document.getElementById('binario').value;
                         valor = binarioParaHexadecimal(binarioHex);
                         break;
+                }
+                
+                // Formatação para usar vírgula como separador decimal
+                if (typeof valor === 'number' && !Number.isInteger(valor)) {
+                    valor = valor.toString().replace('.', ',');
                 }
                 
                 valorResultado.textContent = valor;
